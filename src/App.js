@@ -2,12 +2,56 @@ import React, { Component } from 'react';
 import './App.css';
 import bravaScriptData from "./chicken-vegetables.py";
 
+class Graph extends Component {
+  render() {
+    //let jsonString = JSON.stringify(this.props.procedureObject, undefined, 4);
+
+    return (
+      <div className='graph'>
+        {/* Render the parameters */}
+        {this.props.procedureObject.params
+        ? Object.entries(this.props.procedureObject.params).map(([label, variable]) =>
+          <p key={label}>
+            param {label} {variable}
+          </p>) 
+          
+          :<p>params</p> 
+        }
+        
+        {/* Render the steps */}
+        {this.props.procedureObject.steps ?
+          Object.entries(this.props.procedureObject.steps).map(([stepName, value]) => {
+            return (
+              <div key={stepName}>
+                step {stepName}:
+                {stepName ?
+                Object.entries(stepName).map(([condition, val]) => {
+                  console.log('HERE: ' + stepName[condition]);
+                  return (
+                  <div key={condition}>{condition} {Object.entries(val).map((key,val2) => {
+                    return (
+                      <span key={key}>{key} - {val2}</span>
+                      )
+                    })
+                  }</div>
+                  )
+                }) : <div>unloaded</div> }
+              </div>
+            )
+          }) :<p>Nothing</p>
+        }
+      </div>
+    )
+  }
+}
+
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       value: fetch(bravaScriptData).then(res => res.text()),
-      parsed: 'Parsed code output'
+      parsed: 'Parsed code output',
+      procedureObject: {}
     }
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -34,14 +78,27 @@ class App extends Component {
   getChild(index) { return index+1; }
   getGrandchild(index) { return index+2; }
 
+  // Function to return int seconds from strings like 4m30s, 30s, 4m, etc.
+  formatSeconds(timeString) {
+    var seconds = 0;
+    var timeArray = timeString.split(/[ms]/);
+    var minFix = timeString.includes("m");
+
+    timeArray[0] && timeArray[1] ? seconds = 
+      parseInt(timeArray[0]) * 60 + parseInt(timeArray[1]) : 
+      seconds = (minFix) ? parseInt(timeArray[0])*60 : parseInt(timeArray[0]);
+
+    return seconds;
+  }
+
   // Loops through submitted BravaScript as a large array, pulling out each section and reassembling into a JavaScript object, then finally returns valid JSON of the parsed script.
   parseBravaScript(code) {
     //console.log(code + '\n Parse operation complete');
     const processedArray = {};
     const params = {};
     const steps = {};
-    let heaters = {};
     let currentStep = '';
+    let prevStep = '';
     
     // Regexes
     const stripSpaces = /"[^"]*"|\S+/gm; // Strips spaces
@@ -50,6 +107,8 @@ class App extends Component {
     let rawCodeArray = code.match(stripSpaces);
     console.log(rawCodeArray);
     //this.setState({parsed: processedArray.join('\n')});
+    var heaterArray = [];
+    var whenArray = [];
 
     rawCodeArray.forEach((element, index) => {
       //console.log(`${element} at ${index}`);
@@ -62,18 +121,26 @@ class App extends Component {
 
         case 'step':
           // Get the steps
-          var exitCondition = {
-            time: rawCodeArray[index+5],
-            step: rawCodeArray[index+7]
-          }
-          steps[rawCodeArray[this.getChild(index)]] = exitCondition;
-          
           currentStep = rawCodeArray[this.getChild(index)];
-          //rawCodeArray[this.getGrandchild(index)];
+          steps[currentStep] = {};
+
+          if (prevStep !== currentStep) {
+            whenArray = [];
+            heaterArray = [];
+          }
+          
           break;
 
         case 'when':
           // Get the exit conditions
+          var exitConditionParams = (this.formatSeconds(rawCodeArray[index+3])) ? 
+              {timeSpent : (this.formatSeconds(rawCodeArray[index+3]))} : 
+              {temp : rawCodeArray[index+3]};
+
+          exitConditionParams.then = rawCodeArray[index+5];
+
+          whenArray.push(exitConditionParams);          
+          steps[currentStep].when = whenArray;
           break;
 
         case 'then':
@@ -82,21 +149,26 @@ class App extends Component {
 
         case 'heater':
           // Get the heater arrays
+          var lampArray = [];
 
-          var heatersArray = [
-            rawCodeArray[index+1],
-            rawCodeArray[index+2],
-            rawCodeArray[index+3],
-            rawCodeArray[index+4],
-            rawCodeArray[index+5],
-            rawCodeArray[index+6]
-          ];
           if (rawCodeArray[index+1] !== "off") {
-            steps[currentStep].heaters = heatersArray;
+            lampArray = [
+              parseInt(rawCodeArray[index+1]),
+              parseInt(rawCodeArray[index+2]),
+              parseInt(rawCodeArray[index+3]),
+              parseInt(rawCodeArray[index+4]),
+              parseInt(rawCodeArray[index+5]),
+              parseInt(rawCodeArray[index+6]),
+              parseInt(rawCodeArray[index+8].split('s',1)) ? parseInt(rawCodeArray[index+8].split('s',1)) : 0
+            ];
+          } else {
+            lampArray = [0,0,0,0,0,0,
+              parseInt(rawCodeArray[index+3].split('s',1)) ? parseInt(rawCodeArray[index+3].split('s',1)) : 0
+            ]
           }
 
-          //steps[currentStep].push(heaters);
-          heaters = {};
+          heaterArray.push(lampArray);
+          steps[currentStep].heaters = heaterArray;
           break;
 
         case 'for':
@@ -106,16 +178,45 @@ class App extends Component {
         default:
           break;
       }
+      prevStep = currentStep;
+      
     });
 
     processedArray.params = params;
     processedArray.steps = steps;
-
-    var replacer = function(k, v) { if (v === undefined) { return null; } return v; };
     
     // Convert the JS object into JSON, display the results
-    var jsonString = JSON.stringify(processedArray, null, 2);
-    this.setState({parsed: jsonString});
+    var jsonString = JSON.stringify(processedArray, undefined, 4);
+    var syntaxJsonString = this.syntaxHighlight(jsonString);
+    this.setState({parsed: syntaxJsonString});
+    this.setState({procedureObject: processedArray});
+  }
+
+  output(inp) {
+    return (
+      <pre>
+        {inp}
+      </pre>
+    )
+  }
+
+  syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
   }
 
   render() {
@@ -123,20 +224,21 @@ class App extends Component {
       <div className="App">
         <form onSubmit={this.handleSubmit}>
           <label>
-            Enter BravaScript:
+            BravaScript / JSON Converter:
           </label>
           <textarea 
             value={this.state.value}
             onChange={this.handleChange}
           />
           
-          <button type="submit" value="Submit">Submit</button>
+          <button type="submit" value="Submit">Convert to JSON</button>
         </form>
-        <div className='output'>
-          <pre>
-            {this.state.parsed}
+        <div className='json'>
+          <pre dangerouslySetInnerHTML={{ __html: this.state.parsed }}>
+            
           </pre>
         </div>
+        <Graph procedureObject={this.state.procedureObject} className='graph' />
       </div>
     );
   }

@@ -14,7 +14,11 @@ form {
 }
 
 form label {
-  display: block;
+  display: inline-block;
+  width: 80vw;
+  background:#222;
+  color: white;
+  border: 2px solid #222;
 }
 
 form button {
@@ -36,12 +40,34 @@ textarea {
   background: black;
   font-family: monospace;
   font-size: 0.8em;
+  border: 0px solid #000;
 }
 
-.output {
+.json {
   background: black;
   color: white;
   height: 100%;
-  display: block;
+  display: inline-block;
   white-space: pre-line;
+  font-size: 0.6em;
+  width: 50%;
+  max-width: 50%;
+  vertical-align: top;
+  border-right: 1px solid #666;
+}
+
+pre {outline: 0px solid #ccc; padding: 5px; margin: 5px; }
+.string { color: aqua; }
+.number { color: magenta; }
+.boolean { color: red; }
+.null { color: grey; }
+.key { color: yellow; }
+
+.graph {
+  background: black;
+  color: white;
+  height: 100%;
+  max-width: 49%;
+  display: inline-block;
+  vertical-align: top;
 }
