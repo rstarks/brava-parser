@@ -21,11 +21,11 @@ class Graph extends Component {
         {/* Render the parameters */}
         {this.props.procedureObject.params
         ? Object.entries(this.props.procedureObject.params).map(([label, variable]) =>
-          <p key={label}>
+          <div key={label}>
             param {label} {variable}
-          </p>) 
+          </div>) 
           
-          :<p>params</p> 
+          :<div>Re-converted BravaScript from JSON output</div> 
         }
         
         {/* Render the steps */}
@@ -46,7 +46,7 @@ class Graph extends Component {
                     })
                   }</div>
                   )
-                }) : <div>unloaded</div> }
+                }) : <div></div> }
                 {stepName ?
                 Object.entries(value.heaters).map(([sequence, cycle]) => {
                   //console.log('HERE: ' + stepName[condition]);
@@ -58,10 +58,10 @@ class Graph extends Component {
                     })
                   }</div>
                   )
-                }) : <div>unloaded</div> }
+                }) : <div></div> }
               </div>
             )
-          }) :<p>Nothing</p>
+          }) :<div></div>
         }
       </pre></div>
     )
@@ -73,7 +73,7 @@ class App extends Component {
     super(props);
     this.state = {
       value: fetch(bravaScriptData).then(res => res.text()),
-      parsed: 'Parsed code output',
+      parsed: 'JSON from Bravascript output',
       procedureObject: {}
     }
     this.handleChange = this.handleChange.bind(this);
