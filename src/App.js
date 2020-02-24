@@ -2,7 +2,9 @@ import React, { Component } from 'react';
 import './App.css';
 import bravaScriptData from "./chicken-vegetables.py";
 
+// Graph component currently returns BravaScript from the generated JavaScript object
 class Graph extends Component {
+  // This function will convert an int seconds into XmYs format used in BravaScript
   formatTimeString(seconds) {
     var timeString = '';
     if (seconds / 60 > 1) {
@@ -14,8 +16,6 @@ class Graph extends Component {
   }
   
   render() {
-    //let jsonString = JSON.stringify(this.props.procedureObject, undefined, 4);
-
     return (
       <div className='graph'><pre>
         {/* Render the parameters */}
@@ -27,7 +27,7 @@ class Graph extends Component {
           
           :<div>Re-converted BravaScript from JSON output</div> 
         }
-        
+        <br/>
         {/* Render the steps */}
         {this.props.procedureObject.steps ?
           Object.entries(this.props.procedureObject.steps).map(([stepName, value]) => {
@@ -36,12 +36,12 @@ class Graph extends Component {
                 step {stepName}:
                 {stepName ?
                 Object.entries(value.when).map(([condition, val]) => {
-                  //console.log('HERE: ' + stepName[condition]);
+                  // Render the exit condition(s)
                   return (
                   <div key={condition}>&nbsp;&nbsp;&nbsp;&nbsp;when {Object.entries(val).map(([key,parameter]) => {
                     return (
                       <span key={key}>
-                        {key}{key=='timeSpent' ? '(' + stepName + ')' : ''} {key == 'timeSpent'||key=='probeTemp' ? '>= ' :''}{parseInt(parameter) ? this.formatTimeString(parameter) : parameter} </span>
+                        {key}{key=='timeSpent' ? '(' + stepName + ')' : ''} {key == 'timeSpent'||key == 'probeTemp' ? '>= ' :''}{parseInt(parameter) ? this.formatTimeString(parameter) : parameter} </span>
                       )
                     })
                   }</div>
@@ -49,10 +49,11 @@ class Graph extends Component {
                 }) : <div></div> }
                 {stepName ?
                 Object.entries(value.heaters).map(([sequence, cycle]) => {
-                  //console.log('HERE: ' + stepName[condition]);
+                  // Render the heater arrays
                   return (
                   <div key={sequence}>&nbsp;&nbsp;&nbsp;&nbsp;heater {Object.entries(cycle).map(([position,intensity]) => {
                     return (
+                      // Positions 1-5 = lamp power and position 6 = the cycle duration
                       <span key={position}>{position!=6 ? intensity + ' ':''}{(intensity>0 && position==6) ? 'for ' + this.formatTimeString(intensity): '' }</span>
                       )
                     })
@@ -91,10 +92,7 @@ class App extends Component {
   }
 
   handleSubmit(event) {
-    //alert('BravaScript parsed: ' + this.state.value);
     event.preventDefault();
-
-    // Run function to parse the code
     this.parseBravaScript(this.state.value);
   }
 
