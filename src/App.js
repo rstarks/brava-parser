@@ -41,7 +41,7 @@ class Graph extends Component {
                   <div key={condition}>&nbsp;&nbsp;&nbsp;&nbsp;when {Object.entries(val).map(([key,parameter]) => {
                     return (
                       <span key={key}>
-                        {key}{key=='timeSpent' ? '(' + stepName + ')' : ''} {key == 'timeSpent'||key == 'probeTemp' ? '>= ' :''}{parseInt(parameter) ? this.formatTimeString(parameter) : parameter} </span>
+                        {key}{key==='timeSpent' ? '(' + stepName + ')' : ''} {key === 'timeSpent'||key === 'probeTemp' ? '>= ' :''}{parseInt(parameter) ? this.formatTimeString(parameter) : parameter} </span>
                       )
                     })
                   }</div>
