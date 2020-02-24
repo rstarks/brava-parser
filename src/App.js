@@ -3,11 +3,21 @@ import './App.css';
 import bravaScriptData from "./chicken-vegetables.py";
 
 class Graph extends Component {
+  formatTimeString(seconds) {
+    var timeString = '';
+    if (seconds / 60 > 1) {
+      timeString = parseInt(seconds/60) + 'm' + seconds % 60 + 's';
+    } else {
+      timeString = seconds % 60 + 's';
+    }
+    return timeString;
+  }
+  
   render() {
     //let jsonString = JSON.stringify(this.props.procedureObject, undefined, 4);
 
     return (
-      <div className='graph'>
+      <div className='graph'><pre>
         {/* Render the parameters */}
         {this.props.procedureObject.params
         ? Object.entries(this.props.procedureObject.params).map(([label, variable]) =>
@@ -25,12 +35,25 @@ class Graph extends Component {
               <div key={stepName}>
                 step {stepName}:
                 {stepName ?
-                Object.entries(stepName).map(([condition, val]) => {
-                  console.log('HERE: ' + stepName[condition]);
+                Object.entries(value.when).map(([condition, val]) => {
+                  //console.log('HERE: ' + stepName[condition]);
                   return (
-                  <div key={condition}>{condition} {Object.entries(val).map((key,val2) => {
+                  <div key={condition}>&nbsp;&nbsp;&nbsp;&nbsp;when {Object.entries(val).map(([key,parameter]) => {
                     return (
-                      <span key={key}>{key} - {val2}</span>
+                      <span key={key}>
+                        {key}{key=='timeSpent' ? '(' + stepName + ')' : ''} {key == 'timeSpent'||key=='probeTemp' ? '>= ' :''}{parseInt(parameter) ? this.formatTimeString(parameter) : parameter} </span>
+                      )
+                    })
+                  }</div>
+                  )
+                }) : <div>unloaded</div> }
+                {stepName ?
+                Object.entries(value.heaters).map(([sequence, cycle]) => {
+                  //console.log('HERE: ' + stepName[condition]);
+                  return (
+                  <div key={sequence}>&nbsp;&nbsp;&nbsp;&nbsp;heater {Object.entries(cycle).map(([position,intensity]) => {
+                    return (
+                      <span key={position}>{position!=6 ? intensity + ' ':''}{(intensity>0 && position==6) ? 'for ' + this.formatTimeString(intensity): '' }</span>
                       )
                     })
                   }</div>
@@ -40,7 +63,7 @@ class Graph extends Component {
             )
           }) :<p>Nothing</p>
         }
-      </div>
+      </pre></div>
     )
   }
 }
@@ -135,7 +158,7 @@ class App extends Component {
           // Get the exit conditions
           var exitConditionParams = (this.formatSeconds(rawCodeArray[index+3])) ? 
               {timeSpent : (this.formatSeconds(rawCodeArray[index+3]))} : 
-              {temp : rawCodeArray[index+3]};
+              {probeTemp : rawCodeArray[index+3]};
 
           exitConditionParams.then = rawCodeArray[index+5];
 
