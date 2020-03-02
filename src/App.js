@@ -2,8 +2,110 @@ import React, { Component } from 'react';
 import './App.css';
 import bravaScriptData from "./chicken-vegetables.py";
 
-// Graph component currently returns BravaScript from the generated JavaScript object
-class Graph extends Component {
+class Step extends Component {
+  render() {
+    return (
+      <div></div>
+    )
+  }
+}
+
+// Graph component renders a visual representation of the generated JavaScript object
+class Graph extends Component { 
+  returnLampClass(power) {
+    power = parseInt(power);
+    let color = '';
+    if (power == 0) {
+      color = 'lamp-off';
+    } else if (power > 0 && power <= 20) {
+      color = 'lamp-low';
+    } else if (power > 20 && power <= 40) {
+      color = 'lamp-med-low';
+    } else if (power > 40 && power <= 60) {
+      color = 'lamp-medium';
+    } else if (power > 60 && power <= 80) {
+      color = 'lamp-med-high';
+    } else if (power > 80 && power <= 90) {
+      color = 'lamp-high';
+    } else if (power > 90 && power <= 100) {
+      color = 'lamp-sear';
+    }
+
+    return (
+      color
+    );
+  }
+
+  getStepWidth(value) {
+    let width = 400;
+
+    value.map((val) => {
+      Object.entries(val).map(([condition, parameter]) => {
+        if (parseInt(parameter)) {
+          //console.log(parameter);
+          width = parseInt(parameter * 10);
+        }
+      })
+    })
+    return width;
+  }
+
+  render() {
+    const GRAPH_X_MOD = 2;
+    const GRAPH_Y_MOD = 1;
+ 
+    return (
+      <div className='graph'>
+        <div className='graph-inner'>
+          {/* Render the steps */}
+        {this.props.procedureObject.steps ?
+          Object.entries(this.props.procedureObject.steps).map(([stepName, value]) => {
+            return (
+              <div className='graph-step' style={{width:this.getStepWidth(value.when)}} key={stepName}>
+                <div className='graph-step-label'>step {stepName}: </div>
+                {stepName ?
+                Object.entries(value.when).map(([condition, val]) => {
+                  // Render the exit condition(s)
+                  return (
+                  <div className='graph-step-exit' key={condition}>when {Object.entries(val).map(([key,parameter]) => {
+                    return (
+                      <span key={key}>
+                        {key}{key==='timeSpent' ? '(' + stepName + ')' : ''} {key === 'timeSpent'||key === 'probeTemp' ? '>= ' :''}{parseInt(parameter) ? parameter : 'GOTO: ' + parameter} </span>
+                      )
+                    })
+                  }</div>
+                  )
+                }) : <div></div> }
+                {stepName ?
+                Object.entries(value.heaters).map(([sequence, cycle]) => {
+                  // Render the heater arrays
+                  return (
+                  <div class='graph-step-sequence' key={sequence}>{Object.entries(cycle).map(([position,intensity]) => {
+                    return (
+                      // Positions 1-5 = lamp power and position 6 = the cycle duration
+                        <span style={{width:100/6*GRAPH_X_MOD,height:intensity*GRAPH_Y_MOD}} className={`bar ${this.returnLampClass(intensity)}`} key={position}>{position!=6 ? 
+                          intensity
+                         + ' ':''}
+                          
+                          {(intensity>0 && position==6) ? 'for ' + intensity: '' }
+                          </span>
+                      )
+                    })
+                  }</div>
+                  )
+                }) : <div></div> }
+              </div>
+            )
+          }) :<div></div>
+        }
+        </div>
+      </div>
+    )
+  }
+}
+
+// BravaScript component currently returns BravaScript from the generated JavaScript object
+class BravaScript extends Component {
   // This function will convert an int seconds into XmYs format used in BravaScript
   formatTimeString(seconds) {
     var timeString = '';
@@ -17,7 +119,7 @@ class Graph extends Component {
   
   render() {
     return (
-      <div className='graph'><pre>
+      <div className='bravascript'><pre>
         {/* Render the parameters */}
         {this.props.procedureObject.params
         ? Object.entries(this.props.procedureObject.params).map(([label, variable]) =>
@@ -126,7 +228,7 @@ class App extends Component {
     code = code.replace(/:/g,''); // Strips colons
 
     let rawCodeArray = code.match(stripSpaces);
-    console.log(rawCodeArray);
+    //console.log(rawCodeArray);
     //this.setState({parsed: processedArray.join('\n')});
     var heaterArray = [];
     var whenArray = [];
@@ -253,13 +355,17 @@ class App extends Component {
           />
           
           <button type="submit" value="Submit">Convert to JSON</button>
-        </form>
+        </form> 
+        
+        <Graph procedureObject={this.state.procedureObject} />
+
         <div className='json'>
           <pre dangerouslySetInnerHTML={{ __html: this.state.parsed }}>
             
           </pre>
         </div>
-        <Graph procedureObject={this.state.procedureObject} className='graph' />
+        
+        <BravaScript procedureObject={this.state.procedureObject} />
       </div>
     );
   }

@@ -63,7 +63,7 @@ pre {outline: 0px solid #ccc; padding: 5px; margin: 5px; }
 .null { color: grey; }
 .key { color: yellow; }
 
-.graph {
+.bravascript {
   background: black;
   color: white;
   height: 100%;
@@ -71,3 +71,50 @@ pre {outline: 0px solid #ccc; padding: 5px; margin: 5px; }
   display: inline-block;
   vertical-align: top;
 }
+
+.graph {
+  background: white;
+  color: black;
+  width: 100%;
+  text-align: left;
+  position: relative;
+  font-size: 0.8em;
+  display: inline-block;
+}
+.graph-inner {
+  height: 12em;
+  box-sizing: border-box;
+  overflow-y: hidden;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.graph-step {
+  display: inline-block;
+  border: 1px solid black;
+  padding: 0.5em;
+  height: 100%;
+}
+.graph-step-label {
+  display: inline-block;
+}
+.graph-step-exit {
+  display: inline-block;
+}
+.graph-step-sequence {
+  display: inline-block;
+}
+
+.bar {
+  display: inline-block;
+  margin: 2px;
+  text-align: center;
+}
+
+.lamp-off {       background: gray; }
+.lamp-low {       background: white; }
+.lamp-med-low {   background: beige; }
+.lamp-medium {    background: yellow; }
+.lamp-med-high {  background: orange; }
+.lamp-high {      background: orangered; }
+.lamp-sear {      background: red; }
